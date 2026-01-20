@@ -2,11 +2,11 @@
 
 A sleek React music player, built with React, Vite, TypeScript and TailwindCSS.
 
-![Desktop](/public/screenshot.png)
+<img src="/public/screenshot.png" alt="Desktop">
 
 Mobile friendly.
 
-![Mobile](/public/screenshot-mobile.png)
+<img src="/public/screenshot-mobile.png" alt="Mobile" height="600">
 
 ## Quick Start
 
