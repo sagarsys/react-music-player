@@ -1,4 +1,4 @@
-export type Song = {
+export type SongModel = {
   id: number;
   title: string;
   artist: string;

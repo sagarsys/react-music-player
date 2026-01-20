@@ -1,7 +1,13 @@
-import './App.css'
+import "./App.css";
+import MusicPlayer from "@/components/MusicPlayer.tsx";
+import PlayerProvider from "@/context/PlayerProvider.tsx";
 
 function App() {
-    return <h1>Hello World</h1>
+  return (
+    <PlayerProvider>
+      <MusicPlayer />
+    </PlayerProvider>
+  );
 }
 
-export default App
+export default App;
