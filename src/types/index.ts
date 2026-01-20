@@ -5,4 +5,4 @@ export type SongModel = {
   duration: string;
 };
 
-export type LoopMode = "off" | "all" | "one";
+export type LoopMode = 'off' | 'all' | 'one';

@@ -1,5 +1,5 @@
-import { Disc3 } from "lucide-react";
-import { songs } from "@/constants/songs.ts";
+import { Disc3 } from 'lucide-react';
+import { songs } from '@/constants/songs.ts';
 
 const MusicPlayerHeader = () => {
   return (
@@ -11,9 +11,7 @@ const MusicPlayerHeader = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Music Player</h1>
-            <p className="text-sm text-muted-foreground">
-              {songs.length} songs
-            </p>
+            <p className="text-sm text-muted-foreground">{songs.length} songs</p>
           </div>
         </div>
       </div>
