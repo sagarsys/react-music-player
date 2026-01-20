@@ -5,6 +5,14 @@ import { usePlayerContext } from '@/usePlayerContext.ts';
 import { songs } from '@/constants/songs.ts';
 import type { LoopMode } from '@/types';
 
+const generateRandomNonRepeatingIdInRange = (min: number, max: number, currentIdx: number) => {
+  let idx = Math.floor(Math.random() * (max - min + 1)) + min;
+  while (currentIdx === idx) {
+    idx = Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  return idx;
+};
+
 const PlayerControls = () => {
   const {
     currentSong,
@@ -15,6 +23,8 @@ const PlayerControls = () => {
     setIsPlaying,
     setCurrentSong,
     setCurrentSongId,
+    isShuffled,
+    setIsShuffled,
   } = usePlayerContext();
 
   const onLoopModeChange = () => {
@@ -29,6 +39,15 @@ const PlayerControls = () => {
   const changeSong = (direction: 'next' | 'prev') => {
     if (!currentSongId) return;
     if (loopMode === 'one') return; // ID stays the same
+
+    if (isShuffled) {
+      const randomIndex = generateRandomNonRepeatingIdInRange(0, songs.length - 1, currentSongId - 1);
+      const randomSong = songs[randomIndex];
+      console.log(randomIndex, randomSong);
+      setCurrentSong(randomSong);
+      setCurrentSongId(randomSong.id);
+      return;
+    }
 
     const isNext = direction === 'next';
     const isFirst = currentSongId === 1;
@@ -71,12 +90,10 @@ const PlayerControls = () => {
           {/* Playback controls */}
           <div className="flex items-center gap-2">
             <Button
+              onClick={() => setIsShuffled(!isShuffled)}
               variant="ghost"
               size="icon"
-              className={cn(
-                'h-10 w-10 transition-colors',
-                // isShuffled && "text-primary"
-              )}
+              className={cn('h-10 w-10 transition-colors', isShuffled && 'text-primary')}
               aria-label="Toggle shuffle"
             >
               <Shuffle className="h-5 w-5" />

@@ -10,6 +10,8 @@ type PlayerContextType = {
   setIsPlaying: (isPlaying: boolean) => void;
   loopMode: LoopMode;
   setLoopMode: (mode: LoopMode) => void;
+  isShuffled: boolean;
+  setIsShuffled: (isShuffled: boolean) => void;
 };
 
 export const PlayerContext = createContext<PlayerContextType | undefined>(undefined);

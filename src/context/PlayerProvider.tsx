@@ -7,6 +7,7 @@ const PlayerProvider = ({ children }: PropsWithChildren) => {
   const [currentSongId, setCurrentSongId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loopMode, setLoopMode] = useState<LoopMode>('off');
+  const [isShuffled, setIsShuffled] = useState(false);
 
   const contextValue = useMemo(
     () => ({
@@ -18,8 +19,10 @@ const PlayerProvider = ({ children }: PropsWithChildren) => {
       setIsPlaying,
       loopMode,
       setLoopMode,
+      isShuffled,
+      setIsShuffled,
     }),
-    [currentSong, currentSongId, isPlaying, loopMode],
+    [currentSong, currentSongId, isPlaying, loopMode, isShuffled],
   );
 
   return <PlayerContext.Provider value={contextValue}>{children}</PlayerContext.Provider>;
