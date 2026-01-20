@@ -4,7 +4,7 @@ import Song from '@/components/Song';
 import { usePlayerContext } from '@/usePlayerContext.ts';
 
 const SongsList = () => {
-  const { currentSongId, setCurrentSongId, setCurrentSong, setIsPlaying } = usePlayerContext();
+  const { currentSongId, isPlaying, setCurrentSongId, setCurrentSong, setIsPlaying } = usePlayerContext();
 
   const onSongClick = (song: SongModel) => {
     setCurrentSong(song);
@@ -16,7 +16,13 @@ const SongsList = () => {
     <main className="max-w-4xl mx-auto px-4 py-6 pb-32">
       <div className="space-y-2">
         {songs.map((song: SongModel) => (
-          <Song key={song.id} song={song} isActive={song.id === currentSongId} onClick={() => onSongClick(song)} />
+          <Song
+            key={song.id}
+            song={song}
+            isActive={song.id === currentSongId}
+            isPlaying={isPlaying}
+            onClick={() => onSongClick(song)}
+          />
         ))}
       </div>
     </main>

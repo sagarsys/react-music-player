@@ -2,17 +2,54 @@ import { Button } from '@/components/ui/button.tsx';
 import cn from 'classnames';
 import { SkipBack, SkipForward, Play, Pause, Repeat, Repeat1, Shuffle } from 'lucide-react';
 import { usePlayerContext } from '@/usePlayerContext.ts';
+import { songs } from '@/constants/songs.ts';
+import type { LoopMode } from '@/types';
 
 const PlayerControls = () => {
-  const { currentSong, isPlaying, loopMode, setLoopMode } = usePlayerContext();
+  const {
+    currentSong,
+    currentSongId,
+    isPlaying,
+    loopMode,
+    setLoopMode,
+    setIsPlaying,
+    setCurrentSong,
+    setCurrentSongId,
+  } = usePlayerContext();
 
   const onLoopModeChange = () => {
-    let nextLoopMode = loopMode;
-    if (loopMode === 'off') nextLoopMode = 'one';
-    if (loopMode === 'one') nextLoopMode = 'all';
-    if (loopMode === 'all') nextLoopMode = 'off';
+    const nextModes: Record<string, LoopMode> = {
+      off: 'one',
+      one: 'all',
+      all: 'off',
+    };
+    setLoopMode(nextModes[loopMode]);
+  };
 
-    setLoopMode(nextLoopMode);
+  const changeSong = (direction: 'next' | 'prev') => {
+    if (!currentSongId) return;
+    if (loopMode === 'one') return; // ID stays the same
+
+    const isNext = direction === 'next';
+    const isFirst = currentSongId === 1;
+    const isLast = currentSongId === songs.length;
+
+    if (loopMode === 'off') {
+      if ((isNext && isLast) || (!isNext && isFirst)) {
+        setCurrentSong(null);
+        setCurrentSongId(null);
+        setIsPlaying(false);
+        return;
+      }
+    }
+
+    let nextId: number;
+    if (isNext) nextId = isLast ? 1 : currentSongId + 1;
+    else nextId = isFirst ? songs.length : currentSongId - 1;
+
+    const nextSong = songs.find((s) => s.id === nextId) || null;
+    setCurrentSong(nextSong);
+    setCurrentSongId(nextSong?.id || null);
   };
 
   return (
@@ -45,11 +82,21 @@ const PlayerControls = () => {
               <Shuffle className="h-5 w-5" />
             </Button>
 
-            <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="Previous track">
+            <Button
+              onClick={() => changeSong('prev')}
+              disabled={!currentSongId}
+              aria-disabled={!currentSongId}
+              onKeyDown={(e) => (e.key === ' ' ? changeSong('prev') : undefined)}
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              aria-label="Previous track"
+            >
               <SkipBack className="h-5 w-5" />
             </Button>
 
             <Button
+              onClick={() => setIsPlaying(!isPlaying)}
               size="icon"
               className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
               aria-label={isPlaying ? 'Pause' : 'Play'}
@@ -57,7 +104,13 @@ const PlayerControls = () => {
               {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-1" />}
             </Button>
 
-            <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="Next track">
+            <Button
+              onClick={() => changeSong('next')}
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              aria-label="Next track"
+            >
               <SkipForward className="h-5 w-5" />
             </Button>
 
