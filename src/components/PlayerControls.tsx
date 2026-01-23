@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button.tsx';
 import cn from 'classnames';
 import { SkipBack, SkipForward, Play, Pause, Repeat, Repeat1, Shuffle } from 'lucide-react';
-import { usePlayerContext } from '@/usePlayerContext.ts';
+import { usePlayerContext } from '@/hooks/usePlayerContext.ts';
 import { songs } from '@/constants/songs.ts';
-import type { LoopMode } from '@/types';
+import type { LoopMode, SongModel } from '@/types';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer.ts';
 
 const generateRandomNonRepeatingIdInRange = (min: number, max: number, currentIdx: number) => {
   let idx = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -27,6 +28,8 @@ const PlayerControls = () => {
     setIsShuffled,
   } = usePlayerContext();
 
+  const { play, pause, stop } = useAudioPlayer();
+
   const onLoopModeChange = () => {
     const nextModes: Record<string, LoopMode> = {
       off: 'one',
@@ -38,14 +41,18 @@ const PlayerControls = () => {
 
   const changeSong = (direction: 'next' | 'prev') => {
     if (!currentSongId) return;
-    if (loopMode === 'one') return; // ID stays the same
+    stop();
+    if (loopMode === 'one') {
+      play(currentSong as SongModel);
+      return;
+    } // ID stays the same
 
     if (isShuffled) {
       const randomIndex = generateRandomNonRepeatingIdInRange(0, songs.length - 1, currentSongId - 1);
       const randomSong = songs[randomIndex];
-      console.log(randomIndex, randomSong);
       setCurrentSong(randomSong);
       setCurrentSongId(randomSong.id);
+      play(randomSong);
       return;
     }
 
@@ -69,6 +76,13 @@ const PlayerControls = () => {
     const nextSong = songs.find((s) => s.id === nextId) || null;
     setCurrentSong(nextSong);
     setCurrentSongId(nextSong?.id || null);
+    if (nextSong) play(nextSong);
+  };
+
+  const togglePlayback = () => {
+    if (isPlaying) pause();
+    else play(currentSong as SongModel);
+    setIsPlaying(!isPlaying);
   };
 
   return (
@@ -113,7 +127,7 @@ const PlayerControls = () => {
             </Button>
 
             <Button
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={() => togglePlayback()}
               size="icon"
               className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
               aria-label={isPlaying ? 'Pause' : 'Play'}

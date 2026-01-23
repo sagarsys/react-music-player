@@ -1,14 +1,18 @@
 import { songs } from '@/constants/songs';
 import type { SongModel } from '@/types';
 import Song from '@/components/Song';
-import { usePlayerContext } from '@/usePlayerContext.ts';
+import { usePlayerContext } from '@/hooks/usePlayerContext.ts';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer.ts';
 
 const SongsList = () => {
   const { currentSongId, isPlaying, setCurrentSongId, setCurrentSong, setIsPlaying } = usePlayerContext();
+  const { play, stop } = useAudioPlayer();
 
   const onSongClick = (song: SongModel) => {
+    if (isPlaying) stop();
     setCurrentSong(song);
     setCurrentSongId(song.id);
+    play(song);
     setIsPlaying(true);
   };
 

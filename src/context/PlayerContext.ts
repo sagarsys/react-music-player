@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createContext, type RefObject } from 'react';
 import type { LoopMode, SongModel } from '@/types';
 
 type PlayerContextType = {
@@ -12,6 +12,8 @@ type PlayerContextType = {
   setLoopMode: (mode: LoopMode) => void;
   isShuffled: boolean;
   setIsShuffled: (isShuffled: boolean) => void;
+  audio: RefObject<HTMLAudioElement | null>;
+  setAudio: (audio: HTMLAudioElement) => void;
 };
 
 export const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
