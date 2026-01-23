@@ -10,7 +10,7 @@ const MusicPlayerHeader = () => {
             <Disc3 className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Music Player</h1>
+            <h1 className="text-xl font-bold text-foreground">Sagar's Music Player</h1>
             <p className="text-sm text-muted-foreground">{songs.length} songs</p>
           </div>
         </div>
