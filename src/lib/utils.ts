@@ -12,3 +12,11 @@ export const generateRandomNonRepeatingIdInRange = (min: number, max: number, cu
   }
   return idx;
 };
+
+export function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function safeParseTime(value: number): number {
+  return Number.isFinite(value) ? value : 0;
+}
