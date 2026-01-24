@@ -1,4 +1,4 @@
-import PlayerControls from '@/components/PlayerControls.tsx';
+import PlayerControlBar from '@/components/PlayerControlBar.tsx';
 import SongsList from '@/components/SongsList.tsx';
 import MusicPlayerHeader from '@/components/MusicPlayerHeader.tsx';
 
@@ -7,7 +7,7 @@ const MusicPlayer = () => {
     <div className="min-h-screen bg-background">
       <MusicPlayerHeader />
       <SongsList />
-      <PlayerControls />
+      <PlayerControlBar />
     </div>
   );
 };

@@ -4,3 +4,11 @@ import { twMerge } from 'tailwind-merge';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const generateRandomNonRepeatingIdInRange = (min: number, max: number, currentIdx: number) => {
+  let idx = Math.floor(Math.random() * (max - min + 1)) + min;
+  while (currentIdx === idx) {
+    idx = Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  return idx;
+};
