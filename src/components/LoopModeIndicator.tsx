@@ -1,13 +1,16 @@
-import { usePlayerContext } from '@/hooks/usePlayerContext.ts';
+import type { LoopMode } from '@/types';
 
-const LoopModeIndicator = () => {
-  const { loopMode } = usePlayerContext();
+type Props = {
+  mode: LoopMode;
+};
+
+const LoopModeIndicator = ({ mode }: Props) => {
   return (
     <div className="flex-1 flex justify-end">
       <span className="text-xs text-muted-foreground uppercase tracking-wider">
-        {loopMode === 'off' && 'Loop Off'}
-        {loopMode === 'all' && 'Loop All'}
-        {loopMode === 'one' && 'Loop One'}
+        {mode === 'off' && 'Loop Off'}
+        {mode === 'all' && 'Loop All'}
+        {mode === 'one' && 'Loop One'}
       </span>
     </div>
   );

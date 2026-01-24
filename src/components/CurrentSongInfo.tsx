@@ -1,14 +1,16 @@
-import { usePlayerContext } from '@/hooks/usePlayerContext.ts';
+import type { SongModel } from '@/types';
 
-const CurrentSongInfo = () => {
-  const { currentSong } = usePlayerContext();
+type Props = {
+  song: SongModel | null;
+};
 
+const CurrentSongInfo = ({ song }: Props) => {
   return (
     <div className="flex-1 min-w-0">
-      {currentSong ? (
+      {song ? (
         <div>
-          <p className="font-medium text-foreground truncate">{currentSong.title}</p>
-          <p className="text-sm text-muted-foreground truncate">{currentSong.artist}</p>
+          <p className="font-medium text-foreground truncate">{song.title}</p>
+          <p className="text-sm text-muted-foreground truncate">{song.artist}</p>
         </div>
       ) : (
         <p className="text-muted-foreground">No song selected</p>
