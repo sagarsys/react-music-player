@@ -1,12 +1,12 @@
 import './App.css';
 import MusicPlayer from '@/components/MusicPlayer.tsx';
-import PlayerProvider from '@/context/PlayerProvider.tsx';
+import AudioStoreProvider from '@/context/AudioStoreProvider.tsx';
 
 function App() {
   return (
-    <PlayerProvider>
+    <AudioStoreProvider>
       <MusicPlayer />
-    </PlayerProvider>
+    </AudioStoreProvider>
   );
 }
 

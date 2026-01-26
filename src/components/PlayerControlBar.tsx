@@ -2,10 +2,10 @@ import SeekBar from '@/components/SeekBar.tsx';
 import CurrentSongInfo from '@/components/CurrentSongInfo.tsx';
 import LoopModeIndicator from '@/components/LoopModeIndicator.tsx';
 import PlayerControls from '@/components/PlayerControls.tsx';
-import { usePlayerContext } from '@/hooks/usePlayerContext.ts';
+import { useAudioStoreContext } from '@/hooks/useAudioStoreContext.ts';
 
 const PlayerControlBar = () => {
-  const { currentSong, loopMode } = usePlayerContext();
+  const { currentSong, loopMode } = useAudioStoreContext();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">

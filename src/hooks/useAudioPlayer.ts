@@ -1,4 +1,4 @@
-import { usePlayerContext } from '@/hooks/usePlayerContext.ts';
+import { useAudioStoreContext } from '@/hooks/useAudioStoreContext.ts';
 import type { LoopMode, SongModel } from '@/types';
 import { generateRandomNonRepeatingIdInRange } from '@/lib/utils.ts';
 import { songs } from '@/constants/songs.ts';
@@ -17,7 +17,7 @@ export function useAudioPlayer() {
     setCurrentSongId,
     setLoopMode,
     setIsPlaying,
-  } = usePlayerContext();
+  } = useAudioStoreContext();
 
   const play = useCallback(
     (song: SongModel) => {

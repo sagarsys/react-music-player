@@ -1,7 +1,7 @@
 import { createContext, type RefObject } from 'react';
 import type { LoopMode, SongModel } from '@/types';
 
-type PlayerContextType = {
+type AudioStoreContextType = {
   currentSong: SongModel | null;
   currentSongId: number | null;
   setCurrentSong: (song: SongModel | null) => void;
@@ -16,4 +16,4 @@ type PlayerContextType = {
   setAudio: (audio: HTMLAudioElement) => void;
 };
 
-export const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
+export const AudioStoreContext = createContext<AudioStoreContextType | undefined>(undefined);

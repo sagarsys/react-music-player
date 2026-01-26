@@ -1,11 +1,11 @@
 import { Button } from '@/components/ui/button.tsx';
 import cn from 'classnames';
 import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from 'lucide-react';
-import { usePlayerContext } from '@/hooks/usePlayerContext.ts';
+import { useAudioStoreContext } from '@/hooks/useAudioStoreContext.ts';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer.ts';
 
 const PlayerControls = () => {
-  const { currentSongId, isPlaying, loopMode, isShuffled, setIsShuffled } = usePlayerContext();
+  const { currentSongId, isPlaying, loopMode, isShuffled, setIsShuffled } = useAudioStoreContext();
 
   const { changeLoopMode, changeSong, togglePlayback } = useAudioPlayer();
 

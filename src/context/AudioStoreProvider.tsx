@@ -1,8 +1,8 @@
 import { type PropsWithChildren, useCallback, useMemo, useRef, useState } from 'react';
 import type { LoopMode, SongModel } from '@/types';
-import { PlayerContext } from '@/context/PlayerContext';
+import { AudioStoreContext } from '@/context/AudioStoreContext.ts';
 
-const PlayerProvider = ({ children }: PropsWithChildren) => {
+const AudioStoreProvider = ({ children }: PropsWithChildren) => {
   const [currentSong, setCurrentSong] = useState<SongModel | null>(null);
   const [currentSongId, setCurrentSongId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -32,7 +32,7 @@ const PlayerProvider = ({ children }: PropsWithChildren) => {
     [currentSong, currentSongId, isPlaying, loopMode, isShuffled, setAudio],
   );
 
-  return <PlayerContext.Provider value={contextValue}>{children}</PlayerContext.Provider>;
+  return <AudioStoreContext.Provider value={contextValue}>{children}</AudioStoreContext.Provider>;
 };
 
-export default PlayerProvider;
+export default AudioStoreProvider;
