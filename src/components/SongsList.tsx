@@ -2,11 +2,10 @@ import { songs } from '@/constants/songs';
 import type { Track } from '@/types';
 import Song from '@/components/Song';
 import { useAudioStoreSelector } from '@/hooks/useAudioStoreSelector.ts';
-import { selectCurrentTrack } from '@/lib/audioStore.ts';
 import { useAudioStoreActions } from '@/hooks/useAudioStoreActions.ts';
 
 const SongsList = () => {
-  const currentSong = useAudioStoreSelector(selectCurrentTrack);
+  const currentSongId = useAudioStoreSelector((s) => s.currentTrackId);
   const isPlaying = useAudioStoreSelector((s) => s.status === 'playing');
   const { playById } = useAudioStoreActions();
 
@@ -21,7 +20,7 @@ const SongsList = () => {
           <Song
             key={song.id}
             song={song}
-            isActive={song.id === currentSong?.id}
+            isActive={song.id === currentSongId}
             isPlaying={isPlaying}
             onClick={() => onSongClick(song.id)}
           />

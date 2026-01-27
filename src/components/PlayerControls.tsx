@@ -3,11 +3,10 @@ import cn from 'classnames';
 import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from 'lucide-react';
 import { useAudioStoreActions } from '@/hooks/useAudioStoreActions.ts';
 import { useAudioStoreSelector } from '@/hooks/useAudioStoreSelector.ts';
-import { selectCurrentTrack } from '@/lib/audioStore.ts';
 
 const PlayerControls = () => {
   const { next, prev, pause, resume, toggleShuffle, cycleLoopMode } = useAudioStoreActions();
-  const currentSong = useAudioStoreSelector(selectCurrentTrack);
+  const currentSongId = useAudioStoreSelector((s) => s.currentTrackId);
   const isShuffled = useAudioStoreSelector((s) => s.shuffleEnabled);
   const isPlaying = useAudioStoreSelector((s) => s.status === 'playing');
   const loopMode = useAudioStoreSelector((s) => s.loopMode);
@@ -26,8 +25,8 @@ const PlayerControls = () => {
 
       <Button
         onClick={prev}
-        disabled={!currentSong?.id}
-        aria-disabled={!currentSong?.id}
+        disabled={!currentSongId}
+        aria-disabled={!currentSongId}
         onKeyDown={(e) => (e.key === ' ' ? prev() : undefined)}
         variant="ghost"
         size="icon"

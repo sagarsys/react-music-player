@@ -18,6 +18,7 @@ export type AudioState = {
   currentIndex: number;
   // O(1) id lookup
   idToIndex: Record<number, number>;
+
   status: AudioStatus;
   error: Error | null;
 

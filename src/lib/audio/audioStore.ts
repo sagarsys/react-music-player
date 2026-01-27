@@ -1,12 +1,13 @@
 import type { AudioState, AudioStore, LoadQueueOptions, LoopMode, Track } from '@/types';
-import { buildIdToIndex, clamp, shuffle, toFiniteNumber } from '@/lib/utils.ts';
+import { buildIdToIndex, clamp, toFiniteNumber } from '@/lib/utils.ts';
+import { buildShuffleState, getNextIndex, getPrevIndex } from '@/lib/audio/helpers.ts';
 
 /**
  * Store implementation: Context holds only the stable store object.
  * Components subscribe with useAudioSelector to avoid global re-renders.
  */
 export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): AudioStore {
-  const timeUpdateIntervalMs = options?.timeUpdateIntervalMs ?? 1000;
+  const timeUpdateIntervalMs = options?.timeUpdateIntervalMs ?? 999;
 
   const audio = new Audio();
   audio.preload = 'metadata';
@@ -44,75 +45,16 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     notify();
   };
 
-  const resolveIndexFromId = (s: AudioState): number => {
-    if (!s.currentTrackId) return -1;
-    const idx = s.idToIndex[s.currentTrackId];
-    return idx ?? -1;
-  };
-
-  const applyCurrentSelection = (prev: AudioState, next: Partial<AudioState>): AudioState => {
-    const merged = { ...prev, ...next } as AudioState;
-    const resolvedIdx = resolveIndexFromId(merged);
-    return { ...merged, currentIndex: resolvedIdx };
-  };
-
-  const buildShuffleState = (
-    queueLength: number,
-    currentIndex: number,
-  ): Pick<AudioState, 'shuffleOrder' | 'shufflePos'> => {
-    if (queueLength <= 0) return { shuffleOrder: [], shufflePos: -1 };
-
-    const base = Array.from({ length: queueLength }, (_, i) => i);
-    const shuffled = shuffle(base);
-
-    // make current track first for next behavior
-    const desiredIndex = currentIndex >= 0 ? currentIndex : 0;
-    const pos = Math.max(0, shuffled.indexOf(desiredIndex));
-    if (pos !== 0) [shuffled[0], shuffled[pos]] = [shuffled[pos], shuffled[0]];
-
-    return { shuffleOrder: shuffled, shufflePos: 0 };
-  };
-
-  const getNextIndex = (state: AudioState): number => {
-    const { queue, currentIndex, loopMode, shuffleEnabled, shuffleOrder, shufflePos } = state;
-    if (queue.length === 0) return -1;
-    if (loopMode === 'one') return currentIndex >= 0 ? currentIndex : 0;
-
-    const lastIndex = queue.length - 1;
-
-    if (shuffleEnabled) {
-      const nextPos = shufflePos + 1;
-      if (nextPos <= lastIndex) return shuffleOrder[nextPos];
-      return loopMode === 'all' ? shuffleOrder[0] : -1;
-    }
-
-    const next = currentIndex < 0 ? 0 : currentIndex + 1;
-    if (next <= lastIndex) return next;
-    return loopMode === 'all' ? 0 : -1;
-  };
-
-  const getPrevIndex = (state: AudioState): number => {
-    const { queue, currentIndex, loopMode, shuffleEnabled, shuffleOrder, shufflePos } = state;
-    if (queue.length === 0) return -1;
-    if (loopMode === 'one') return currentIndex >= 0 ? currentIndex : -1;
-
-    const lastIndex = queue.length - 1;
-
-    if (shuffleEnabled) {
-      const prevPos = shufflePos - 1;
-      if (prevPos >= 0) return shuffleOrder[prevPos];
-      return loopMode === 'all' ? shuffleOrder[lastIndex] : -1;
-    }
-
-    const prev = currentIndex < 0 ? -1 : currentIndex - 1;
-    if (prev >= 0) return prev;
-    return loopMode === 'all' ? lastIndex : 0;
-  };
-
   const rebuildShuffleIfNeeded = (nextState: AudioState): AudioState => {
     if (!nextState.shuffleEnabled) return nextState;
     const { shuffleOrder, shufflePos } = buildShuffleState(nextState.queue.length, nextState.currentIndex);
     return { ...nextState, shuffleOrder, shufflePos };
+  };
+
+  const syncCurrentIndexFromId = (s: AudioState): AudioState => {
+    const { currentTrackId, idToIndex } = s;
+    const idx = currentTrackId === null ? -1 : (idToIndex[currentTrackId] ?? -1);
+    return idx === s.currentIndex ? s : { ...s, currentIndex: idx };
   };
 
   const syncDuration = () => {
@@ -162,12 +104,22 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     if (!track) return;
 
     setState((prev) => {
-      let next: AudioState = { ...prev, currentIndex: idx, status: 'loading', error: null };
+      let next: AudioState = syncCurrentIndexFromId({
+        ...prev,
+        currentTrackId: track.id,
+        status: 'loading',
+        error: null,
+        currentIndex: prev.currentIndex,
+      });
+
+      // Ensure index is exactly idx even if map is stale (defensive)
+      next = { ...next, currentIndex: idx };
+
       if (next.shuffleEnabled) {
         const pos = next.shuffleOrder.indexOf(idx);
         next = { ...next, shufflePos: pos >= 0 ? pos : 0 };
       }
-      return applyCurrentSelection(prev, next);
+      return next;
     });
 
     await playUrl(track.src);
@@ -183,7 +135,7 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     const nextIndex = getNextIndex(state);
 
     if (nextIndex < 0) {
-      setState((prev) => ({ ...prev, status: 'ended' }));
+      stop({ release: true, reset: true });
       return;
     }
 
@@ -197,12 +149,13 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
   const playPrevious = async (): Promise<void> => {
     if (state.queue.length === 0) return;
     const prevIndex = getPrevIndex(state);
-    if (prevIndex < 0) return;
-
+    if (prevIndex < 0) {
+      stop({ release: true, reset: true });
+      return;
+    }
     if (state.shuffleEnabled) {
       setState((prev) => ({ ...prev, shufflePos: Math.max(0, prev.shufflePos - 1) }));
     }
-
     await playAtIndex(prevIndex);
   };
 
@@ -228,8 +181,9 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     }
   };
 
-  const stop = (opts?: { release?: boolean }): void => {
+  const stop = (opts?: { release?: boolean; reset?: boolean }): void => {
     const release = opts?.release ?? false;
+    const reset = opts?.reset ?? false;
 
     audio.pause();
     try {
@@ -243,7 +197,17 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
       audio.load();
     }
 
-    setState((prevState) => ({ ...prevState, status: 'idle', currentTime: 0, error: null }));
+    setState((prevState) => ({
+      ...prevState,
+      status: 'idle',
+      currentTime: 0,
+      error: null,
+      // optional reset
+      currentIndex: reset ? -1 : prevState.currentIndex,
+      currentTrackId: reset ? null : prevState.currentTrackId,
+      shufflePos: reset ? -1 : prevState.shufflePos,
+      shuffleOrder: reset ? buildShuffleState(prevState.queue.length, 0).shuffleOrder : prevState.shuffleOrder,
+    }));
   };
 
   const seek = (seconds: number): void => {
@@ -264,26 +228,26 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     const autoplay = opts?.autoplay ?? false;
     const startIndex = opts?.startIndex ?? 0;
 
-    const idToIndex = buildIdToIndex(tracks);
     const idx = tracks.length ? clamp(startIndex, 0, tracks.length - 1) : -1;
-    const currentTrackId = idx >= 0 ? tracks[idx].id : null;
+    const idToIndex = buildIdToIndex(tracks);
+    const currentTrackId = idx >= 0 ? (tracks[idx]?.id ?? null) : null;
 
     setState((prevState) => {
-      let next: AudioState = {
+      const next: AudioState = syncCurrentIndexFromId({
         ...prevState,
         queue: tracks,
-        currentIndex: idx,
-        currentTrackId,
         idToIndex,
+        currentTrackId,
+        currentIndex: idx, // kept for fast access + consistent with previous behavior
         currentTime: 0,
         duration: 0,
         error: null,
-      };
-      next = rebuildShuffleIfNeeded(next);
-      return applyCurrentSelection(prevState, next);
+      });
+
+      return rebuildShuffleIfNeeded(next);
     });
 
-    if (!autoplay) {
+    if (!autoplay || idx < 0) {
       stop({ release: true });
       return;
     }
@@ -318,9 +282,7 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
   // audio event handlers (named so that they can be removed on unmount
   const onLoadedMetadata = () => syncDuration();
   const onDurationChange = () => syncDuration();
-  // High-frequency event: keep audio moving smoothly; store state updates are throttled.
   const onTimeUpdate = () => syncTimeThrottled();
-  // Helpful for seekbar behavior
   const onSeeking = () => syncTimeImmediate();
   const onSeeked = () => syncTimeImmediate();
   const onPlay = () => setState((s) => ({ ...s, status: 'playing' }));

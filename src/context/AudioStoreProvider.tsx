@@ -1,7 +1,7 @@
 import { type PropsWithChildren, useEffect, useState } from 'react';
 import { AudioStoreContext } from '@/context/AudioStoreContext.ts';
 import type { AudioStore } from '@/types';
-import { createAudioStore } from '@/lib/audioStore.ts';
+import { createAudioStore } from '@/lib/audio/audioStore.ts';
 
 type Props = PropsWithChildren & {
   timeUpdateIntervalMs?: number;

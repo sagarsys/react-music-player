@@ -1,5 +1,5 @@
 import { useAudioStoreSelector } from '@/hooks/useAudioStoreSelector.ts';
-import { selectCurrentTrack } from '@/lib/audioStore.ts';
+import { selectCurrentTrack } from '@/lib/audio/audioStore.ts';
 
 const CurrentSongInfo = () => {
   const song = useAudioStoreSelector(selectCurrentTrack);
