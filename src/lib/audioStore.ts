@@ -1,58 +1,5 @@
 import type { AudioState, AudioStore, LoadQueueOptions, LoopMode, Track } from '@/types';
-import { clamp, shuffle, toFiniteNumber } from '@/lib/utils.ts';
-
-export function buildShuffleState(
-  queueLength: number,
-  currentIndex: number,
-): Pick<AudioState, 'shuffleOrder' | 'shufflePos'> {
-  if (queueLength <= 0) return { shuffleOrder: [], shufflePos: -1 };
-
-  const base = Array.from({ length: queueLength }, (_, i) => i);
-  const shuffled = shuffle(base);
-
-  // make current track first for next behavior
-  const desiredIndex = currentIndex >= 0 ? currentIndex : 0;
-  const pos = Math.max(0, shuffled.indexOf(desiredIndex));
-  if (pos !== 0) [shuffled[0], shuffled[pos]] = [shuffled[pos], shuffled[0]];
-
-  return { shuffleOrder: shuffled, shufflePos: 0 };
-}
-
-export function getNextIndex(state: AudioState): number {
-  const { queue, currentIndex, loopMode, shuffleEnabled, shuffleOrder, shufflePos } = state;
-  if (queue.length === 0) return -1;
-  if (loopMode === 'one') return currentIndex >= 0 ? currentIndex : 0;
-
-  const lastIndex = queue.length - 1;
-
-  if (shuffleEnabled) {
-    const nextPos = shufflePos + 1;
-    if (nextPos <= lastIndex) return shuffleOrder[nextPos];
-    return loopMode === 'all' ? shuffleOrder[0] : -1;
-  }
-
-  const next = currentIndex < 0 ? 0 : currentIndex + 1;
-  if (next <= lastIndex) return next;
-  return loopMode === 'all' ? 0 : -1;
-}
-
-export function getPrevIndex(state: AudioState): number {
-  const { queue, currentIndex, loopMode, shuffleEnabled, shuffleOrder, shufflePos } = state;
-  if (queue.length === 0) return -1;
-  if (loopMode === 'one') return currentIndex >= 0 ? currentIndex : -1;
-
-  const lastIndex = queue.length - 1;
-
-  if (shuffleEnabled) {
-    const prevPos = shufflePos - 1;
-    if (prevPos >= 0) return shuffleOrder[prevPos];
-    return loopMode === 'all' ? shuffleOrder[lastIndex] : -1;
-  }
-
-  const prev = currentIndex < 0 ? -1 : currentIndex - 1;
-  if (prev >= 0) return prev;
-  return loopMode === 'all' ? lastIndex : 0;
-}
+import { buildIdToIndex, clamp, shuffle, toFiniteNumber } from '@/lib/utils.ts';
 
 /**
  * Store implementation: Context holds only the stable store object.
@@ -74,7 +21,9 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
 
   let state: AudioState = {
     queue: [],
+    currentTrackId: null,
     currentIndex: -1,
+    idToIndex: {},
     status: 'idle',
     error: null,
 
@@ -95,6 +44,71 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     notify();
   };
 
+  const resolveIndexFromId = (s: AudioState): number => {
+    if (!s.currentTrackId) return -1;
+    const idx = s.idToIndex[s.currentTrackId];
+    return idx ?? -1;
+  };
+
+  const applyCurrentSelection = (prev: AudioState, next: Partial<AudioState>): AudioState => {
+    const merged = { ...prev, ...next } as AudioState;
+    const resolvedIdx = resolveIndexFromId(merged);
+    return { ...merged, currentIndex: resolvedIdx };
+  };
+
+  const buildShuffleState = (
+    queueLength: number,
+    currentIndex: number,
+  ): Pick<AudioState, 'shuffleOrder' | 'shufflePos'> => {
+    if (queueLength <= 0) return { shuffleOrder: [], shufflePos: -1 };
+
+    const base = Array.from({ length: queueLength }, (_, i) => i);
+    const shuffled = shuffle(base);
+
+    // make current track first for next behavior
+    const desiredIndex = currentIndex >= 0 ? currentIndex : 0;
+    const pos = Math.max(0, shuffled.indexOf(desiredIndex));
+    if (pos !== 0) [shuffled[0], shuffled[pos]] = [shuffled[pos], shuffled[0]];
+
+    return { shuffleOrder: shuffled, shufflePos: 0 };
+  };
+
+  const getNextIndex = (state: AudioState): number => {
+    const { queue, currentIndex, loopMode, shuffleEnabled, shuffleOrder, shufflePos } = state;
+    if (queue.length === 0) return -1;
+    if (loopMode === 'one') return currentIndex >= 0 ? currentIndex : 0;
+
+    const lastIndex = queue.length - 1;
+
+    if (shuffleEnabled) {
+      const nextPos = shufflePos + 1;
+      if (nextPos <= lastIndex) return shuffleOrder[nextPos];
+      return loopMode === 'all' ? shuffleOrder[0] : -1;
+    }
+
+    const next = currentIndex < 0 ? 0 : currentIndex + 1;
+    if (next <= lastIndex) return next;
+    return loopMode === 'all' ? 0 : -1;
+  };
+
+  const getPrevIndex = (state: AudioState): number => {
+    const { queue, currentIndex, loopMode, shuffleEnabled, shuffleOrder, shufflePos } = state;
+    if (queue.length === 0) return -1;
+    if (loopMode === 'one') return currentIndex >= 0 ? currentIndex : -1;
+
+    const lastIndex = queue.length - 1;
+
+    if (shuffleEnabled) {
+      const prevPos = shufflePos - 1;
+      if (prevPos >= 0) return shuffleOrder[prevPos];
+      return loopMode === 'all' ? shuffleOrder[lastIndex] : -1;
+    }
+
+    const prev = currentIndex < 0 ? -1 : currentIndex - 1;
+    if (prev >= 0) return prev;
+    return loopMode === 'all' ? lastIndex : 0;
+  };
+
   const rebuildShuffleIfNeeded = (nextState: AudioState): AudioState => {
     if (!nextState.shuffleEnabled) return nextState;
     const { shuffleOrder, shufflePos } = buildShuffleState(nextState.queue.length, nextState.currentIndex);
@@ -103,6 +117,10 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
 
   const syncDuration = () => {
     setState((prevState) => ({ ...prevState, duration: toFiniteNumber(audio.duration, 0) }));
+  };
+
+  const syncTimeImmediate = () => {
+    setState((s) => ({ ...s, currentTime: toFiniteNumber(audio.currentTime, 0) }));
   };
 
   const syncTimeThrottled = () => {
@@ -149,13 +167,19 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
         const pos = next.shuffleOrder.indexOf(idx);
         next = { ...next, shufflePos: pos >= 0 ? pos : 0 };
       }
-      return next;
+      return applyCurrentSelection(prev, next);
     });
 
     await playUrl(track.src);
   };
 
+  const playById = async (id: number): Promise<void> => {
+    const idx = state.idToIndex[id];
+    await playAtIndex(idx);
+  };
+
   const playNext = async (): Promise<void> => {
+    if (state.queue.length === 0) return;
     const nextIndex = getNextIndex(state);
 
     if (nextIndex < 0) {
@@ -171,6 +195,7 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
   };
 
   const playPrevious = async (): Promise<void> => {
+    if (state.queue.length === 0) return;
     const prevIndex = getPrevIndex(state);
     if (prevIndex < 0) return;
 
@@ -239,19 +264,23 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     const autoplay = opts?.autoplay ?? false;
     const startIndex = opts?.startIndex ?? 0;
 
+    const idToIndex = buildIdToIndex(tracks);
     const idx = tracks.length ? clamp(startIndex, 0, tracks.length - 1) : -1;
+    const currentTrackId = idx >= 0 ? tracks[idx].id : null;
 
     setState((prevState) => {
       let next: AudioState = {
         ...prevState,
         queue: tracks,
         currentIndex: idx,
+        currentTrackId,
+        idToIndex,
         currentTime: 0,
         duration: 0,
         error: null,
       };
       next = rebuildShuffleIfNeeded(next);
-      return next;
+      return applyCurrentSelection(prevState, next);
     });
 
     if (!autoplay) {
@@ -289,7 +318,11 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
   // audio event handlers (named so that they can be removed on unmount
   const onLoadedMetadata = () => syncDuration();
   const onDurationChange = () => syncDuration();
+  // High-frequency event: keep audio moving smoothly; store state updates are throttled.
   const onTimeUpdate = () => syncTimeThrottled();
+  // Helpful for seekbar behavior
+  const onSeeking = () => syncTimeImmediate();
+  const onSeeked = () => syncTimeImmediate();
   const onPlay = () => setState((s) => ({ ...s, status: 'playing' }));
   const onPause = () => setState((s) => ({ ...s, status: s.status === 'ended' ? 'ended' : 'paused' }));
   const onEnded = () => {
@@ -303,6 +336,8 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.addEventListener('durationchange', onDurationChange);
     audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('seeking', onSeeking);
+    audio.addEventListener('seeked', onSeeked);
     audio.addEventListener('play', onPlay);
     audio.addEventListener('pause', onPause);
     audio.addEventListener('ended', onEnded);
@@ -320,6 +355,8 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
     audio.removeEventListener('loadedmetadata', onLoadedMetadata);
     audio.removeEventListener('durationchange', onDurationChange);
     audio.removeEventListener('timeupdate', onTimeUpdate);
+    audio.removeEventListener('seeking', onSeeking);
+    audio.removeEventListener('seeked', onSeeked);
     audio.removeEventListener('play', onPlay);
     audio.removeEventListener('pause', onPause);
     audio.removeEventListener('ended', onEnded);
@@ -339,6 +376,7 @@ export function createAudioStore(options?: { timeUpdateIntervalMs?: number }): A
 
     loadQueue,
     playUrl,
+    playById,
     playAtIndex,
     playNext,
     playPrevious,

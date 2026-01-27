@@ -1,17 +1,16 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Track } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const generateRandomNonRepeatingIdInRange = (min: number, max: number, currentIdx: number) => {
-  let idx = Math.floor(Math.random() * (max - min + 1)) + min;
-  while (currentIdx === idx) {
-    idx = Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-  return idx;
-};
+export function buildIdToIndex(tracks: Track[]): Record<number, number> {
+  const map: Record<number, number> = {};
+  for (let i = 0; i < tracks.length; i++) map[tracks[i].id] = i;
+  return map;
+}
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

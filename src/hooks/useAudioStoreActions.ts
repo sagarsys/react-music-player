@@ -2,13 +2,14 @@ import { useAudioStoreContext } from '@/hooks/useAudioStoreContext.ts';
 import { useMemo } from 'react';
 
 /** Actions hook: stable action references */
-export function useAudioActions() {
+export function useAudioStoreActions() {
   const store = useAudioStoreContext();
 
   return useMemo(
     () => ({
       loadQueue: store.loadQueue,
       play: store.playUrl,
+      playById: store.playById,
       playAtIndex: store.playAtIndex,
       next: store.playNext,
       prev: store.playPrevious,

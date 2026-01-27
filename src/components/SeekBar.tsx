@@ -1,9 +1,9 @@
-import { useAudioActions } from '@/hooks/useAudioActions.ts';
+import { useAudioStoreActions } from '@/hooks/useAudioStoreActions.ts';
 import { useAudioStoreSelector } from '@/hooks/useAudioStoreSelector.ts';
 import { formatTime } from '@/lib/utils.ts';
 
 const SeekBar = () => {
-  const { seek } = useAudioActions();
+  const { seek } = useAudioStoreActions();
   const duration = useAudioStoreSelector((s) => s.duration);
   const currentTime = useAudioStoreSelector((s) => s.currentTime);
 

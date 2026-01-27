@@ -12,7 +12,12 @@ export type AudioStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'ended' | 
 
 export type AudioState = {
   queue: Track[];
+  // Stable identity
+  currentTrackId: number | null;
+  // Fast positional access (derived from currentTrackId + idToIndex)
   currentIndex: number;
+  // O(1) id lookup
+  idToIndex: Record<number, number>;
   status: AudioStatus;
   error: Error | null;
 
@@ -37,6 +42,7 @@ export type AudioStore = {
 
   loadQueue: (tracks: Track[], options?: LoadQueueOptions) => Promise<void>;
   playUrl: (url: string) => Promise<void>;
+  playById: (id: number) => Promise<void>;
   playAtIndex: (index: number) => Promise<void>;
   playNext: () => Promise<void>;
   playPrevious: () => Promise<void>;

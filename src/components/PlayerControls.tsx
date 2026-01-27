@@ -1,12 +1,12 @@
 import { Button } from '@/components/ui/button.tsx';
 import cn from 'classnames';
 import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from 'lucide-react';
-import { useAudioActions } from '@/hooks/useAudioActions.ts';
+import { useAudioStoreActions } from '@/hooks/useAudioStoreActions.ts';
 import { useAudioStoreSelector } from '@/hooks/useAudioStoreSelector.ts';
 import { selectCurrentTrack } from '@/lib/audioStore.ts';
 
 const PlayerControls = () => {
-  const { next, prev, pause, resume, toggleShuffle, cycleLoopMode } = useAudioActions();
+  const { next, prev, pause, resume, toggleShuffle, cycleLoopMode } = useAudioStoreActions();
   const currentSong = useAudioStoreSelector(selectCurrentTrack);
   const isShuffled = useAudioStoreSelector((s) => s.shuffleEnabled);
   const isPlaying = useAudioStoreSelector((s) => s.status === 'playing');
