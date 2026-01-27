@@ -1,10 +1,8 @@
-import type { LoopMode } from '@/types';
+import { useAudioStoreSelector } from '@/hooks/useAudioStoreSelector.ts';
 
-type Props = {
-  mode: LoopMode;
-};
+const LoopModeIndicator = () => {
+  const mode = useAudioStoreSelector((s) => s.loopMode);
 
-const LoopModeIndicator = ({ mode }: Props) => {
   return (
     <div className="flex-1 flex justify-end">
       <span className="text-xs text-muted-foreground uppercase tracking-wider">

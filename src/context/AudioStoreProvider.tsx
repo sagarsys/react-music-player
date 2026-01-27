@@ -1,38 +1,25 @@
-import { type PropsWithChildren, useCallback, useMemo, useRef, useState } from 'react';
-import type { LoopMode, SongModel } from '@/types';
+import { type PropsWithChildren, useEffect, useState } from 'react';
 import { AudioStoreContext } from '@/context/AudioStoreContext.ts';
+import type { AudioStore } from '@/types';
+import { createAudioStore } from '@/lib/audioStore.ts';
 
-const AudioStoreProvider = ({ children }: PropsWithChildren) => {
-  const [currentSong, setCurrentSong] = useState<SongModel | null>(null);
-  const [currentSongId, setCurrentSongId] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [loopMode, setLoopMode] = useState<LoopMode>('off');
-  const [isShuffled, setIsShuffled] = useState(false);
-  const audio = useRef<HTMLAudioElement | null>(null);
+type Props = PropsWithChildren & {
+  timeUpdateIntervalMs?: number;
+};
 
-  const setAudio = useCallback((newAudio: HTMLAudioElement) => {
-    audio.current = newAudio;
-  }, []);
+const AudioStoreProvider = ({ children, timeUpdateIntervalMs = 500 }: Props) => {
+  const [store] = useState<AudioStore>(() => createAudioStore({ timeUpdateIntervalMs }));
 
-  const contextValue = useMemo(
-    () => ({
-      currentSong,
-      setCurrentSong,
-      currentSongId,
-      setCurrentSongId,
-      isPlaying,
-      setIsPlaying,
-      loopMode,
-      setLoopMode,
-      isShuffled,
-      setIsShuffled,
-      audio,
-      setAudio,
-    }),
-    [currentSong, currentSongId, isPlaying, loopMode, isShuffled, setAudio],
-  );
+  // Cleanup on unmounting
+  useEffect(() => {
+    store.attach();
 
-  return <AudioStoreContext.Provider value={contextValue}>{children}</AudioStoreContext.Provider>;
+    return () => {
+      store.destroy();
+    };
+  }, [store]);
+
+  return <AudioStoreContext.Provider value={store}>{children}</AudioStoreContext.Provider>;
 };
 
 export default AudioStoreProvider;

@@ -1,6 +1,6 @@
-import type { SongModel } from '@/types';
+import type { Track } from '@/types';
 
-export const songs: SongModel[] = [
+export const songs: Track[] = [
   {
     id: 1,
     title: 'Adagio For Square',

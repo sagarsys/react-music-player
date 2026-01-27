@@ -2,9 +2,8 @@ import { useContext } from 'react';
 import { AudioStoreContext } from '@/context/AudioStoreContext.ts';
 
 export const useAudioStoreContext = () => {
-  const context = useContext(AudioStoreContext);
-  if (!context) {
-    throw new Error('useAudioStoreContext must be used within a AudioStoreProvider');
-  }
-  return context;
+  const store = useContext(AudioStoreContext);
+  if (!store) throw new Error('useAudioSelector must be used inside <AudioStoreProvider />');
+
+  return store;
 };

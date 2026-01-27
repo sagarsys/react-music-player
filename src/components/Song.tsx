@@ -1,10 +1,10 @@
 import { Music } from 'lucide-react';
 import cn from 'classnames';
-import type { SongModel } from '@/types';
+import type { Track } from '@/types';
 
 type Props = {
-  song: SongModel;
-  onClick: (song: SongModel) => void;
+  song: Track;
+  onClick: (song: Track) => void;
   isActive?: boolean;
   isPlaying?: boolean;
 };

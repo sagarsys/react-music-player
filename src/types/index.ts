@@ -1,4 +1,4 @@
-export type SongModel = {
+export type Track = {
   id: number;
   title: string;
   artist: string;
@@ -7,3 +7,52 @@ export type SongModel = {
 };
 
 export type LoopMode = 'off' | 'all' | 'one';
+
+export type AudioStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'ended' | 'error';
+
+export type AudioState = {
+  queue: Track[];
+  currentIndex: number;
+  status: AudioStatus;
+  error: Error | null;
+
+  currentTime: number;
+  duration: number;
+
+  shuffleEnabled: boolean;
+  shuffleOrder: number[];
+  shufflePos: number;
+
+  loopMode: LoopMode;
+};
+
+export type LoadQueueOptions = {
+  autoplay?: boolean;
+  startIndex?: number;
+};
+
+export type AudioStore = {
+  getState: () => AudioState;
+  subscribe: (listener: () => void) => () => void;
+
+  loadQueue: (tracks: Track[], options?: LoadQueueOptions) => Promise<void>;
+  playUrl: (url: string) => Promise<void>;
+  playAtIndex: (index: number) => Promise<void>;
+  playNext: () => Promise<void>;
+  playPrevious: () => Promise<void>;
+  pause: () => void;
+  resume: () => Promise<void>;
+  stop: (options?: { release?: boolean }) => void;
+  seek: (seconds: number) => void;
+
+  toggleShuffle: () => void;
+  setLoopMode: (mode: LoopMode) => void;
+  cycleLoopMode: () => void;
+
+  getAudioElement: () => HTMLAudioElement;
+  attach: () => void;
+  /**
+   * Cleanup resources (Audio element + listeners). Call on Provider unmount.
+   */
+  destroy: () => void;
+};

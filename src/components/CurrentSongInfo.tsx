@@ -1,10 +1,9 @@
-import type { SongModel } from '@/types';
+import { useAudioStoreSelector } from '@/hooks/useAudioStoreSelector.ts';
+import { selectCurrentTrack } from '@/lib/audioStore.ts';
 
-type Props = {
-  song: SongModel | null;
-};
+const CurrentSongInfo = () => {
+  const song = useAudioStoreSelector(selectCurrentTrack);
 
-const CurrentSongInfo = ({ song }: Props) => {
   return (
     <div className="flex-1 min-w-0">
       {song ? (
